@@ -1,0 +1,29 @@
+import serial
+import serial.tools.list_ports
+import time
+def scan():
+    while True:
+        port=list(serial.tools.list_ports.comports())
+        if port:
+            p0=list(port[0])
+            p1=p0[0]
+            print('插入')
+            return p1
+        time.sleep(0.5)
+def da():
+    p1=scan()
+    time.sleep(0.5)
+    ser=serial.Serial(p1,9600,stopbits=serial.STOPBITS_ONE,bytesize=serial.EIGHTBITS)
+    while True:
+        try:
+            data=ser.read_all().hex()
+            if data:
+               print(data,type(data))
+               if data=='00ff45':
+                   print('按下1键')
+        except:
+            print('拔出')
+            p1 = scan()
+            ser = serial.Serial(p1, 9600, stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS)
+da()
+
