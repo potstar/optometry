@@ -10,13 +10,14 @@ import urllib.error as error
 import json
 
 class MySQLControl():
-    def __init__(self):
-        self.loginURL='http://129.28.117.138:8085/AeyeBackend/user/login'
+    def __init__(self,config):
+        self.loginURL=config.url
         self.URL='http://129.28.117.138:8085/AeyeBackend/testvalues/add'
         self.token=''
-        self.login()
-    def login(self):
-        data={'username':'test','password':'test'}
+        self.valid=0 #token失效
+        self.login(config.username,config.password)
+    def login(self,username,password):
+        data={'username':username,'password':password}
         rData=parse.urlencode(data).encode()
         try:
            respose=request.urlopen(request.Request(self.loginURL,data=rData))
@@ -33,6 +34,11 @@ class MySQLControl():
         else:
             return False
         requestBody=request.Request(self.URL,headers=header,data=requeryData)
+        succuss=self.upLoadData(requestBody)
+        if succuss==1:
+            succuss = self.upLoadData(requestBody)
+        return succuss
+    def upLoadData(self,requestBody):
         try:
             response=request.urlopen(requestBody)
         except error as e:
@@ -40,10 +46,11 @@ class MySQLControl():
         value = json.loads(response.read().decode('utf-8'))
         if value['code']==200:
             return True
-        else:
-            print(value['code'])
-            print(value['message'])
-            return False
+        elif self.valid==0:
+            self.valid=1
+            self.login()
+            return 1
+        return False
     def dataToJson(self,data):
         body1={'studentid':'','lefteyes':'','righteys':'','leftasti':'','rightasti':'','color':'','leftnoeyes':'','rightnoeyes':'','issutiable':''}
         body={}

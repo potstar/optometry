@@ -39,9 +39,15 @@ class WinQdialog(QDialog):
 
 class SightWindow(QtCore.QThread,QDialog):
     teleSignal = pyqtSignal(str)
-    def __init__(self,path):
+    def __init__(self,path,config):
         super(SightWindow,self).__init__()
 
+        #遥控信号
+        self.right=config.RIGHT
+        self.left=config.LEFT
+        self.up=config.UP
+        self.down=config.DOWN
+        self.ok=config.OK
         #self.user = user[0]  # 用户
         self.testNum = 0  # 测试图数
         self.buttonValue = ''
@@ -50,7 +56,7 @@ class SightWindow(QtCore.QThread,QDialog):
         self.testObject = '右'  # 测试对象
         self.message = True
         #self.messageEnd = False
-        self.sight_ms=messagelogic.MessageWindow()
+        self.sight_ms=messagelogic.MessageWindow(self.ok)
         #self.sight_ms.m_ui.pushButton.clicked.connect(self.sight_ms.close)
 
         self.form_sight = WinQdialog() # 窗口初始化
@@ -73,7 +79,7 @@ class SightWindow(QtCore.QThread,QDialog):
         self.sightSelects=['up','down','left','right']
         self.sightselected='up'
         self.picture = TestPicture(path)
-        self.testGrad = 4.5
+        self.testGrad = 4.3
         self.testGradLeft = 0
         self.testGradRight = 0
 
@@ -141,9 +147,6 @@ class SightWindow(QtCore.QThread,QDialog):
         elif self.wrong==1 :
             self.setNewTestPicture()
         else:
-            self.sight_ui.label_6.setText(
-                    '<html><head/><body><p align=\"center\"><span style=\" font-size:14pt; font-weight:600;\">' + str(round(
-                        self.testGrad,1)) + '</span></p></body></html>')
             self.testGrad+=0.1
             self.setNewTestPicture()
 
@@ -174,32 +177,34 @@ class SightWindow(QtCore.QThread,QDialog):
         image=Gui.QImage(file_path)
         self.sight_ui.label_7.setPixmap( Gui.QPixmap(image))
         self.testNum += 1
+        self.sight_ui.label_6.setText(
+            '<html><head/><body><p align=\"center\"><span style=\" font-size:14pt; font-weight:600;\">' + str(round(
+                self.testGrad, 1)) + '</span></p></body></html>')
         #print('测试次数', self.testNum)
         self.sight_ui.label_8.setText('<html><head/><body><p align=\"center\">第' + str(self.testNum) + '张</p></body></html>')
 
     def teleSignaldeal(self,connect):
         #print(connect)
-        if connect=='009f0e':
+        if connect==self.right:
             self.sightRightSlot()
-        elif connect=='009f06':
+        elif connect==self.left:
             self.sightLeftSlot()
-        elif connect=='009f43':
+        elif connect==self.up:
             self.sightUpSlot()
-        elif connect=='009f0a':
+        elif connect==self.down:
             self.sightDownSlot()
     # 测试结束处理
     def endTest(self):
         if self.testObject != '左':
             #print('右结束')
             self.testGradRight = round(self.testGrad,1)
-            self.testGrad = 4.4
+            self.testGrad = 4.3
             self.testObject = '左'
             self.wrong=0
             self.messageEnd=True
             # self.showMessage('开始左眼测试')
             self.sight_ui.label_6.setText(
-                '<html><head/><body><p align=\"center\"><span style=\" font-size:14pt; font-weight:600;\">' + str(
-                    0.0) + '</span></p></body></html>')
+                '<html><head/><body><p align=\"center\"><span style=\" font-size:14pt; font-weight:600;\">0.0</span></p></body></html>')
             self.sight_ui.label_5.setText(
                 '<html><head/><body><p align=\"center\"><span style=\" font-size:14pt; font-weight:600;\">左眼</span></p></body></html>')
             self.testNum = 0

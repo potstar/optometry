@@ -13,8 +13,14 @@ import time
 
 class AstimatismWindow(QDialog):
     astiTeleSignal=pyqtSignal(str)
-    def __init__(self):
+    def __init__(self,config):
         super().__init__()
+        #遥控信号常量值
+        self.YES=config.OK
+        self.NO=config.QUIT
+        self.left=config.LEFT
+        self.right=config.RIGHT
+
         self.testNum1=1
         self.astimatism_ui = astimatism.Ui_Dialog()
         self.astimatism_ui.setupUi(self)
@@ -22,7 +28,7 @@ class AstimatismWindow(QDialog):
         self.astimatism_ui.pushButton_3.clicked.connect(self.astimatismSlotN)
         #self.picture_asti = TestPicture()
 
-        self.anti_ms = messagelogic.MessageWindow()
+        self.anti_ms = messagelogic.MessageWindow(self.YES)
         #self.selectButtons=[self.astimatism_ui.pushButton_4,self.astimatism_ui.pushButton_3]
         #self.selectedButton=self.astimatism_ui.pushButton_4
         #self.selects=['yes','no']
@@ -69,9 +75,9 @@ class AstimatismWindow(QDialog):
         self.exec_()
         self.astiTeleSignal.emit('sight_stop')
     def astiTeleControl(self,connect):
-        if connect=='009f0e' or connect=='009f02':
+        if connect==self.right or connect==self.YES:
             self.astimatismSlotY()
-        elif connect=='009f06' or connect=='00':
+        elif connect==self.left or connect==self.NO:
             self.astimatismSlotN()
     def testData(self):
         #print(self.rightAsti)

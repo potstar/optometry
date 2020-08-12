@@ -1,10 +1,16 @@
-
+'''
+文件：testLogLogic.py 账号检测逻辑
+作者：potstar
+版权：
+日期：2019.4.25
+'''
 
 from __future__ import division
 from PyQt5.QtWidgets import QDialog
 import testLogWin
-
+import PyQt5.QtGui as Gui
 from PyQt5.QtCore import *
+
 
 class testWin(QDialog):
     def __init__(self):
@@ -19,8 +25,10 @@ class testWin(QDialog):
         self.testUi.pushButton.clicked.connect(self.testLogwin)  # 按钮事件绑定处理手动输入
         self.user_id=''
         self.s_user_id=''
+        self.closed=True
         self.rangekey=[x for x in range(48,58)]+[x for x in range(65,91)]
     def showTestWin(self):
+        self.setWindowIcon(Gui.QIcon('favicon.png'))
         self.exec_()
     #手动输入
     def testLogwin(self):

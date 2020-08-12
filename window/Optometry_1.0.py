@@ -3,6 +3,11 @@
 作者：potstar
 版权：
 日期：2019.3.25
+数据缓存文件cache.txt
+格式为：'studentid':'','lefteyes':'','righteys':'','leftasti':'','rightasti':'','color':'','leftnoeyes':'','rightnoeyes':'','issutiable':''
+
+
+
 '''
 from PyQt5.QtWidgets import QMainWindow,QApplication,QDialog,QWidget,QMessageBox
 import PyQt5.QtWidgets
@@ -24,6 +29,23 @@ import settingLogic
 import dateserverse
 import configparser
 import serialServe
+
+
+class Serial():
+    def __init__(self):
+        self.getConfig()
+    def getConfig(self):
+        config=configparser.ConfigParser()
+        config.read(os.getcwd()+'/config.ini')
+        self.url=config.get('data','URL')
+        self.username=config.get('data','USERNAME')
+        self.password=config.get('data','PASSWORD')
+        self.RIGHT =config.get('Serial','RIGHT')
+        self.LEFT =config.get('Serial','LEFT')
+        self.UP =config.get('Serial','UP')
+        self.DOWN =config.get('Serial','DOWN')
+        self.QUIT =config.get('Serial','QUIT')
+        self.OK = config.get('Serial','OK')
 
 #继承主窗口类
 class SubMainWin(QMainWindow):
@@ -49,6 +71,8 @@ class MainWindow(mainWindow.Ui_MainWindow):
         super().__init__()
         self.form = SubMainWin()
         self.setupUi(self.form)
+        # 初始化配置
+        self.configValues = Serial()
         # 主窗口绑定事件
         self.pushButton_2.clicked.connect(self.slot)
         self.pushButton_4.clicked.connect(self.slot_asti)
@@ -68,11 +92,11 @@ class MainWindow(mainWindow.Ui_MainWindow):
         #绑定遥控信号主窗口处理函数
         self.ser.main_signal.connect(self.serialDeal)
         #初始化消息提示窗口
-        self.ms=messagelogic.MessageWindow()
+        self.ms=messagelogic.MessageWindow(self.configValues.OK)
         #初始化账号输入窗口
         self.testwin = testLogLogic.testWin()
-
-        #self.testwin.testUi.pushButton_2.clicked.connect(self.registSolt)
+        #绑定注册按钮事件
+        self.testwin.testUi.pushButton_2.clicked.connect(self.registSolt)
         #输入方式：False为扫描输入，Ture为手动输入
         #self.flag=False
         #扫码编码信息存储
@@ -98,7 +122,7 @@ class MainWindow(mainWindow.Ui_MainWindow):
         self.astiValue=''
         self.colorValue=''
         #初始化网络服务
-        self.dataserver = dateserverse.MySQLControl()
+        self.dataserver = dateserverse.MySQLControl(self.configValues)
         #self.t_mainFlag=True
     #读/写测试距离设置
     def config(self,model,value=None):
@@ -126,8 +150,11 @@ class MainWindow(mainWindow.Ui_MainWindow):
     #新线程监测扫码输入
     def newThread(self):
         while True:
-            if self.testwin.user_id:
-                #print('kaishi')账号有效性判断
+            print(self.testwin.closed)
+            if self.testwin.closed:
+                break
+            elif self.testwin.user_id:
+                #print('kaishi')账号有效性判断（账号长度待定）
                 if 'stu' in self.testwin.user_id:
                     self.userInformation.append(self.testwin.user_id)
                     self.testwin.close()
@@ -166,7 +193,7 @@ class MainWindow(mainWindow.Ui_MainWindow):
     def openNewWindow(self):
         self.testProhject=1
         self.finishNum+=1
-        sight = sightlogic.SightWindow(self.sightPath)
+        sight = sightlogic.SightWindow(self.sightPath,self.configValues)
         #self.checkID(self.userInformation[0])
         self.form.hide()
         #print('开启新窗口')
@@ -193,9 +220,10 @@ class MainWindow(mainWindow.Ui_MainWindow):
         self.ser.qbox_signal_3.connect(self.qboxDeal)
         self.ser.QmessageboxSer=True
         self.ser.messageTip='su'
-        self.msq = messagelogic.MessageWindow()
+        self.msq = messagelogic.MessageWindow(self.configValues.OK)
         self.msq.m_ui.pushButton.clicked.disconnect()
         self.msq.m_ui.pushButton.clicked.connect(self.continueTest)
+        #信号标志
         self.mark = 3
         if self.finishNum==4:
             self.testProhject=0
@@ -223,6 +251,7 @@ class MainWindow(mainWindow.Ui_MainWindow):
     #视力检查按钮事件处理
     def slot(self):
         if not self.userInformation:
+            self.testwin.closed=False
             t = threading.Thread(target=self.newThread)
             t.setDaemon(True)
             t.start()
@@ -235,6 +264,7 @@ class MainWindow(mainWindow.Ui_MainWindow):
     #散光按钮事件处理
     def slot_asti(self):
         if not self.userInformation:
+            self.testwin.closed=False
             t=threading.Thread(target=self.newThread)
             t.setDaemon(True)
             t.start()
@@ -250,7 +280,7 @@ class MainWindow(mainWindow.Ui_MainWindow):
     def openAstiWin(self):
         self.testProhject=3
         self.finishNum+=1
-        asti = AstimatismLogic.AstimatismWindow()
+        asti = AstimatismLogic.AstimatismWindow(self.configValues)
         self.form.hide()
         asti.astimatism_ui.label.setText(
             "<html><head/><body><p align=\"justify\"><span style=\" font-size:14pt;\">" + '用户信息     姓名：'
@@ -265,14 +295,14 @@ class MainWindow(mainWindow.Ui_MainWindow):
         asti.astiTeleSignal.connect(self.teleDeal)
         self.ser.message_signal.connect(asti.anti_ms.closeWin)
         self.ser.sight_signal.connect(asti.astiTeleControl)
-        self.ser.qbox_signal_1.connect(self.qboxDeal)
         asti.initUi()
         self.ser.QmessageboxSer = True
         self.form.show()
         self.ser.message_signal.disconnect(asti.anti_ms.closeWin)
         self.ser.sight_signal.disconnect(asti.astiTeleControl)
+        self.ser.qbox_signal_1.connect(self.qboxDeal)
         self.ser.messageTip='c'
-        self.msq=messagelogic.MessageWindow()
+        self.msq=messagelogic.MessageWindow(self.configValues.OK)
         self.ser.QmessageboxSer = True
         self.msq.m_ui.pushButton.clicked.disconnect()
         self.msq.m_ui.pushButton.clicked.connect(self.continueTest)
@@ -297,12 +327,12 @@ class MainWindow(mainWindow.Ui_MainWindow):
             self.msq.m_ui.horizontalLayout.addWidget(btn1)
             self.msq.m_buttons.append(btn1)
             self.msq.initUi('散光测试完毕！继续辨色检测！')
-        self.ser.qbox_signal_1.disconnect(self.qboxDeal)
         self.ser.QmessageboxSer = False
         self.ser.mainServe = True
     #辨色按钮事件处理
     def slot_color(self):
         if not self.userInformation:
+            self.testwin.closed=False
             t = threading.Thread(target=self.newThread)
             t.setDaemon(True)
             t.start()
@@ -316,7 +346,7 @@ class MainWindow(mainWindow.Ui_MainWindow):
     def openColorWin(self):
         self.testProhject=4
         self.finishNum+=1
-        col = ColorLogic.ColorWindow()
+        col = ColorLogic.ColorWindow(self.configValues)
         self.form.hide()
         #print('开启新窗口')
         col.color_ui.label.setText(
@@ -332,12 +362,12 @@ class MainWindow(mainWindow.Ui_MainWindow):
         self.ser.sight_signal.connect(col.teleSignaldeal)
         col.initUi()
         self.form.show()
-        self.ser.qbox_signal_2.connect(self.qboxDeal)
         self.ser.message_signal.disconnect(col.color_ms.closeWin)
         self.ser.sight_signal.disconnect(col.teleSignaldeal)
+        self.ser.qbox_signal_2.connect(self.qboxDeal)
         self.ser.messageTip = 's'
         self.ser.QmessageboxSer = True
-        self.msq = messagelogic.MessageWindow()
+        self.msq = messagelogic.MessageWindow(self.configValues.OK)
         self.msq.m_ui.pushButton.clicked.disconnect()
         self.msq.m_ui.pushButton.clicked.connect(self.continueTest)
         self.mark = 2
@@ -367,7 +397,7 @@ class MainWindow(mainWindow.Ui_MainWindow):
     def openSuitWin(self):
         self.testProhject = 2
         self.finishNum+=1
-        sight1 = suitableLogic.SightWindow(self.sightPath)
+        sight1 = suitableLogic.SightWindow(self.sightPath,self.configValues)
         #self.checkID(self.userInformation[0])
         self.form.hide()
         # print('开启新窗口')
@@ -395,7 +425,7 @@ class MainWindow(mainWindow.Ui_MainWindow):
         self.ser.qbox_signal.connect(self.qboxDeal)
         self.ser.QmessageboxSer = True
         self.ser.messageTip = 'a'
-        self.msq = messagelogic.MessageWindow()
+        self.msq = messagelogic.MessageWindow(self.configValues.OK)
         self.msq.m_ui.pushButton.clicked.disconnect()
         self.msq.m_ui.pushButton.clicked.connect(self.continueTest)
         self.mark = 0
@@ -424,6 +454,7 @@ class MainWindow(mainWindow.Ui_MainWindow):
     #适配按钮事件处理
     def suitable(self):
         if not self.userInformation:
+            self.testwin.closed=False
             t = threading.Thread(target=self.newThread)
             t.setDaemon(True)
             t.start()
@@ -436,7 +467,7 @@ class MainWindow(mainWindow.Ui_MainWindow):
     #设置按钮事件处理
     def windowSetting(self):
         #PyQt5.QtCore.QCoreApplication.quit()
-        set=settingLogic.settingWin(self.sightPath)
+        set=settingLogic.settingWin(self.sightPath,self.configValues)
         #self.form.hide()
         self.ser.mainServe = False
         self.ser.sight_signal.connect(set.teleControl)
@@ -457,7 +488,9 @@ class MainWindow(mainWindow.Ui_MainWindow):
     def registSolt(self):
         self.ser.mainServe = False
         self.testwin.testUi.label_3.setText('')
+        self.testwin.testUi.lineEdit.setText('')
         self.testwin.close()
+        self.testwin.closed=True
         regist=registerLogic.registerWin()
         regist.showRegisteWin()
         self.ser.mainServe = True
@@ -532,7 +565,7 @@ class MainWindow(mainWindow.Ui_MainWindow):
     #主窗口遥控信号处理
     def serialDeal(self,connect):
         #print(connect)
-        if connect=='009f0e':
+        if connect==self.RIGHT:
             self.button.setStyleSheet("background-color: rgb(170, 170, 255);")
             selectIndex = self.select.index(self.ok) + 1
             if selectIndex>4:
@@ -540,7 +573,7 @@ class MainWindow(mainWindow.Ui_MainWindow):
             self.button=self.buttons[selectIndex]
             self.ok = self.select[selectIndex]
             self.button.setStyleSheet('background-color:yellow')
-        if connect=='009f06':
+        if connect==self.LEFT:
             self.button.setStyleSheet("background-color: rgb(170, 170, 255);")
             selectIndex=self.select.index(self.ok)-1
             if selectIndex<0:
@@ -548,9 +581,9 @@ class MainWindow(mainWindow.Ui_MainWindow):
             self.ok=self.select[selectIndex]
             self.button = self.buttons[selectIndex]
             self.button.setStyleSheet('background-color:yellow')
-        elif connect=='009f57':
+        elif connect==self.QUIT:
             self.form.close()
-        elif connect=='009f02':
+        elif connect==self.OK:
             if self.ok=='asti':
                 self.slot_asti()
             elif self.ok=='color':
@@ -659,7 +692,8 @@ class MainWindow(mainWindow.Ui_MainWindow):
             timer=PyQt5.QtCore.QTimer()
             timer.singleShot(1000,box.close)
             box.exec_()
-            file = open('cache.txt', 'a+')
+            print(dataline)
+            file = open('cache.txt', 'a+',encoding='utf-8')
             file.write(dataline+'\n')
             file.close()
         ######待完善功能，检测扫码列表自动切换下一个人检测
@@ -673,22 +707,23 @@ class MainWindow(mainWindow.Ui_MainWindow):
             self.msq.m_ui.pushButton.clicked.connect(self.continueTest)
             self.mark=4
             self.msq.initUi('请'+self.userInformation[0]+'测试')
+    #离线数据处理
     def dataReHand(self):
-        r=False
         path=os.getcwd()+'/cache.txt'
         with open(path,'r') as fp:
             datas=fp.readlines()
-            if datas:
-                for x in datas:
-                    x=x.strip('\n')
-                    line=x.split('_')
-                    line=line[0:8]+[int(line[8])]
-                    r =self.dataserver.writeData(line)
-                    if not r:
-                        break
-        if r:
+        if datas:
+            newData=datas
+            for x in datas:
+                value=x.strip('\n')
+                line=value.split('_')
+                line=line[0:8]+[int(line[8])]
+                r =self.dataserver.writeData(line)
+                if r:
+                    newData.remove(x)
+            #上传失败，写入文件
             with open('cache.txt', 'w') as fps:
-                fps.write('')
+                fps.writelines(newData)
 if __name__ == '__main__':
     app=QApplication(sys.argv)
     mainWindow=MainWindow()

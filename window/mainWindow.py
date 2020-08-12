@@ -5,6 +5,12 @@
 # Created by: PyQt5 UI code generator 5.11.3
 #
 # WARNING! All changes made in this file will be lost!
+'''
+文件：mainWindow.py 主窗口
+作者：potstar
+版权：
+日期：2019.3.25
+'''
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 

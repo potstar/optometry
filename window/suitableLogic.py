@@ -20,7 +20,7 @@ import threading
 class WinQdialog(QDialog):
     sightSignal =pyqtSignal(str)
     #sightTeleSignal=QtCore.pyqtSignal(str)
-    def __init__(self):
+    def __init__(self,config):
         super().__init__()
         self.s=''
         self.i=0
@@ -41,6 +41,13 @@ class SightWindow(QtCore.QThread,QDialog):
     def __init__(self,path):
         super(SightWindow,self).__init__()
 
+        # 遥控信号常量值
+        self.right = config.RIGHT
+        self.left = config.LEFT
+        self.up = config.UP
+        self.down = config.DOWN
+        self.ok = config.OK
+
         #self.user = user[0]  # 用户
         self.testNum = 0  # 测试图数
         self.buttonValue = ''
@@ -49,7 +56,7 @@ class SightWindow(QtCore.QThread,QDialog):
         self.testObject = '右'  # 测试对象
         self.message = True
         #self.messageEnd = False
-        self.sight_ms=messagelogic.MessageWindow()
+        self.sight_ms=messagelogic.MessageWindow(self.ok)
         #self.sight_ms.m_ui.pushButton.clicked.connect(self.sight_ms.close)
 
         self.form_sight = WinQdialog() # 窗口初始化
@@ -178,13 +185,13 @@ class SightWindow(QtCore.QThread,QDialog):
 
     def teleSignaldeal1(self,connect):
         #print(connect)
-        if connect=='009f0e':
+        if connect==self.right:
             self.sightRightSlot()
-        elif connect=='009f06':
+        elif connect==self.left:
             self.sightLeftSlot()
-        elif connect=='009f43':
+        elif connect==self.up:
             self.sightUpSlot()
-        elif connect=='009f0a':
+        elif connect==self.down:
             self.sightDownSlot()
     # 测试结束处理
     def endTest(self):

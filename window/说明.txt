@@ -1,0 +1,29 @@
+视力检测软件
+可以鼠标和 遥控操作（需要配置遥控器和红外接收转ttl装置 不同遥控器可能不识别，本软件采用天猫盒子遥控器）
+遥控编码可以在config.ini中进行配置
+
+主程序为optometry_1.0.py
+功能
+----视力检查
+----闪光检测
+----距离设置（opt.ini文件）
+----辨色检测
+
+数据缓存文件cache.txt（未配置网络情况下）
+格式为：'studentid':'','lefteyes':'','righteys':'','leftasti':'','rightasti':'','color':'','leftnoeyes':'','rightnoeyes':'','issutiable':''
+上传后台服务器：
+config.ini 配置文件
+ URL = http://129.28.117.138:8085/AeyeBackend/user/login
+ USERNAME= test
+ PASSWORD= test
+
+ 使用的三方库
+ pyqt5 做界面设计（QtDesigner工具）
+ serial 做红外串口通讯
+ 内置库
+ urllib 用作模拟登陆服务器传输数据
+ 其他常见库
+ pyinstaller打包工具 pyintaller -w -p path   xx.py
+  -w 无窗口
+  -p 类加载路径
+  -i 图标

@@ -12,9 +12,11 @@ import message
 from PyQt5.QtCore import *
 
 class MessageWindow(QDialog):
-    def __init__(self):
+    def __init__(self,ok):
         super().__init__()
         self.s = ''
+        #遥控信号确定值
+        self.ok=ok
         self.name=''
         self.m_ui = message.Ui_Dialog()
         self.m_ui.setupUi(self)

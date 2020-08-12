@@ -15,8 +15,15 @@ import time
 
 class ColorWindow(QDialog):
     colorSignal=pyqtSignal(str)
-    def __init__(self):
+    def __init__(self,config):
         super().__init__()
+        #遥控信号常量值
+        self.right=config.RIGHT
+        self.left=config.LEFT
+        self.up=config.UP
+        self.down=config.DOWN
+        self.ok=config.OK
+
         self.testNum=0
         self.color_ui=color.Ui_Dialog()
         self.color_ui.setupUi(self)
@@ -30,7 +37,7 @@ class ColorWindow(QDialog):
         #self.selectButtons=['A','B','C','D']
         #self.selectButton='A'
 
-        self.color_ms=messagelogic.MessageWindow()
+        self.color_ms=messagelogic.MessageWindow(self.ok)
         self.color_ms.m_ui.pushButton.clicked.connect(self.color_ms.close)
         self.basepath=os.getcwd()
         self.picFileName = os.listdir(self.basepath+'/color')
@@ -152,12 +159,12 @@ class ColorWindow(QDialog):
 
     def teleSignaldeal(self,connect):
         #print(connect)
-        if connect=='009f0a':
+        if connect==self.down:
             self.dealD()
-        elif connect=='009f43':
+        elif connect==self.up:
             self.dealA()
-        elif connect=='009f06':
+        elif connect==self.left:
             self.dealB()
-        elif connect=='009f0e':
+        elif connect==self.right:
             self.dealC()
 
